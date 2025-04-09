@@ -622,7 +622,7 @@ def get_action(state, score):
     approximator = NTupleApproximator(4, patterns, weight=weights)
 
     env = Game2048Env()
-    td_mcts = TD_MCTS(env, approximator, iterations=50, exploration_constant=0.5, rollout_depth=0, gamma=1, normalization_factor=50000)
+    td_mcts = TD_MCTS(env, approximator, iterations=50, exploration_constant=0.05, rollout_depth=0, gamma=1, normalization_factor=50000)
     root = TD_MCTS_Node(state, score)
 
     for _ in range(td_mcts.iterations):
