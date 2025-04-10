@@ -429,7 +429,7 @@ class TD_MCTS:
             after_state, reward = deterministic_step(state, action)
             after_node = TD_MCTS_After_Node(after_state, ( node.score + reward ) / self.normalization_factor, parent=node, action=action)
             node.children[action] = after_node
-            for _ in range(3):
+            for _ in range(4):
                 next_state = board_add_random_tile(after_state.copy())
                 next_node = TD_MCTS_Node(next_state, ( node.score + reward ) / self.normalization_factor, parent=after_node)
                 after_node.children.add(next_node)
@@ -625,5 +625,5 @@ patterns = [[(0,0), (0, 1), (0, 2), (1, 0), (1, 1)], [(1, 0), (1, 1), (1, 2), (2
 
 approximator = NTupleApproximator(board_size=4, patterns=patterns, weight=weights)
 
-td_mcts = TD_MCTS(approximator, iterations=50, exploration_constant=0.1, rollout_depth=0, gamma=1)
+td_mcts = TD_MCTS(approximator, iterations=50, exploration_constant=0.1, rollout_depth=1, gamma=1)
 
