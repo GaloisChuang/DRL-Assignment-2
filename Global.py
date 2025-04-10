@@ -3,6 +3,8 @@ import random
 import pickle
 import gym
 from gym import spaces
+import math
+from collections import defaultdict
 
 
 class Game2048Env(gym.Env):
