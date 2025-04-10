@@ -1,0 +1,98 @@
+import copy
+import random
+import math
+import numpy as np
+from collections import defaultdict
+from tqdm import tqdm
+import pickle
+
+
+# -------------------------------
+# TODO: Define transformation functions (rotation and reflection), i.e., rot90, rot180, ..., etc.
+# -------------------------------
+def rot90(pattern, size):
+    M = 0.5 * (size - 1)
+    new_pattern = []
+    for (x, y) in pattern:
+        new_x = M - (y - M)
+        new_y = M + (x - M)
+        new_pattern.append((int(new_x), int(new_y)))
+    return new_pattern
+
+def rot180(pattern, size):
+    M = 0.5 * (size - 1)
+    new_pattern = []
+    for (x, y) in pattern:
+        new_x = M - (x - M)
+        new_y = M - (y - M)
+        new_pattern.append((int(new_x), int(new_y)))
+    return new_pattern
+
+def rot270(pattern, size):
+    M = 0.5 * (size - 1)
+    new_pattern = []
+    for (x, y) in pattern:
+        new_x = M + (y - M)
+        new_y = M - (x - M)
+        new_pattern.append((int(new_x), int(new_y)))
+    return new_pattern
+
+def reflection(pattern, size):
+    new_pattern = []
+    for (x,y) in pattern:
+        new_pattern.append((size - x - 1, y))
+    return new_pattern
+
+
+
+class NTupleApproximator:
+    def __init__(self, board_size, patterns, weight=None):
+        """
+        Initializes the N-Tuple approximator.
+        Hint: you can adjust these if you want
+        """
+        self.board_size = board_size
+        self.patterns = patterns
+        # Create a weight dictionary for each pattern (shared within a pattern group)
+        self.weights = [defaultdict(float) for _ in patterns] if weight is None else weight
+        # Generate symmetrical transformations for each pattern
+        self.symmetry_patterns = []
+        self.symmetry_patterns = [self.generate_symmetries(pattern) for pattern in self.patterns]
+
+    def generate_symmetries(self, pattern):
+        sym = []
+        sym.append(pattern)
+        sym.append(rot90(pattern, self.board_size))
+        sym.append(rot180(pattern, self.board_size))
+        sym.append(rot270(pattern, self.board_size))
+        sym.append(reflection(pattern, self.board_size))
+        sym.append(reflection(rot90(pattern, self.board_size), self.board_size))
+        sym.append(reflection(rot180(pattern, self.board_size), self.board_size))
+        sym.append(reflection(rot270(pattern, self.board_size), self.board_size))
+        return sym
+
+    def tile_to_index(self, tile):
+        """
+        Converts tile values to an index for the lookup table.
+        """
+        return 0 if tile == 0 else int(math.log(tile, 2))
+
+    def get_feature(self, board, coords): # indeX of the weight table
+        # TODO: Extract tile values from the board based on the given coordinates and convert them into a feature tuple.
+        return tuple(self.tile_to_index(board[x, y]) for x, y in coords)
+
+    def value(self, board): # function f in the paper
+        # TODO: Estimate the board value: sum the evaluations from all patterns.
+        total_value = 0
+        for pattern, weight_table in zip(self.patterns, self.weights):
+            sym = self.generate_symmetries(pattern)
+            total_value += sum(weight_table[self.get_feature(board, pat)] for pat in sym)
+        return total_value / ( len(self.patterns) * len(sym) )
+
+    def update(self, board, delta, alpha):
+        # TODO: Update weights based on the TD error.
+        for pattern, weight_table in zip(self.patterns, self.weights):
+            sym = self.generate_symmetries(pattern)
+            for pat in sym:
+                feature = self.get_feature(board, pat)
+                weight_table[feature] += alpha * delta

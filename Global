@@ -1,0 +1,164 @@
+import numpy as np
+import random
+import pickle
+import gym
+from gym import spaces
+from Game2048Env import Game2048Env
+from NTupleApproximator import NTupleApproximator
+from TD_MCTS import TD_MCTS
+
+def compress_line(line):
+    """
+    Compresses a single row or column (represented as a list) by sliding all nonzero elements
+    to the front and merging equal adjacent numbers. Returns the new line and the instant reward
+    gained from merging tiles.
+    """
+    # Remove zeros
+    new_line = [x for x in line if x != 0]
+    merged_line = []
+    instant_reward = 0
+    i = 0
+    while i < len(new_line):
+        # If the next tile exists and is equal, merge them.
+        if i + 1 < len(new_line) and new_line[i] == new_line[i+1]:
+            merged_value = new_line[i] * 2
+            merged_line.append(merged_value)
+            instant_reward += merged_value
+            i += 2  # Skip the next element since it was merged.
+        else:
+            merged_line.append(new_line[i])
+            i += 1
+    # Pad with zeros to maintain the original line length.
+    merged_line += [0] * (len(line) - len(merged_line))
+    return merged_line, instant_reward
+
+
+def board_move_left(board):
+    """
+    Computes the deterministic result of a left move on the board.
+    
+    Args:
+        board (np.array): A 2D numpy array representing the board.
+        
+    Returns:
+        new_board (np.array): The board after the left move.
+        instant_reward (int): The reward (score) obtained by merging tiles during the move.
+    """
+    new_board = board.copy()
+    total_reward = 0
+    for i in range(new_board.shape[0]):
+        row = list(new_board[i, :])
+        new_row, reward = compress_line(row)
+        total_reward += reward
+        new_board[i, :] = new_row
+    return new_board, total_reward
+
+
+def board_move_right(board):
+    """
+    Computes the deterministic result of a right move on the board.
+    
+    Args:
+        board (np.array): A 2D numpy array representing the board.
+        
+    Returns:
+        new_board (np.array): The board after the right move.
+        instant_reward (int): The reward (score) obtained by merging tiles during the move.
+    """
+    new_board = board.copy()
+    total_reward = 0
+    for i in range(new_board.shape[0]):
+        # Reverse the row to apply left-move logic.
+        row = list(new_board[i, :])[::-1]
+        new_row, reward = compress_line(row)
+        total_reward += reward
+        # Reverse back the result.
+        new_board[i, :] = new_row[::-1]
+    return new_board, total_reward
+
+
+def board_move_up(board):
+    """
+    Computes the deterministic result of an upward move on the board.
+    
+    Args:
+        board (np.array): A 2D numpy array representing the board.
+        
+    Returns:
+        new_board (np.array): The board after the upward move.
+        instant_reward (int): The reward (score) obtained by merging tiles during the move.
+    """
+    new_board = board.copy()
+    total_reward = 0
+    # Process each column.
+    for j in range(new_board.shape[1]):
+        col = list(new_board[:, j])
+        new_col, reward = compress_line(col)
+        total_reward += reward
+        new_board[:, j] = new_col
+    return new_board, total_reward
+
+
+def board_move_down(board):
+    """
+    Computes the deterministic result of a downward move on the board.
+    
+    Args:
+        board (np.array): A 2D numpy array representing the board.
+        
+    Returns:
+        new_board (np.array): The board after the downward move.
+        instant_reward (int): The reward (score) obtained by merging tiles during the move.
+    """
+    new_board = board.copy()
+    total_reward = 0
+    # Process each column in reverse order.
+    for j in range(new_board.shape[1]):
+        col = list(new_board[:, j])[::-1]
+        new_col, reward = compress_line(col)
+        total_reward += reward
+        new_board[:, j] = new_col[::-1]
+    return new_board, total_reward
+
+def deterministic_step(board, action):
+    
+    if action == 0:
+        moved_board, reward = board_move_up(board)
+    elif action == 1:
+        moved_board, reward = board_move_down(board)
+    elif action == 2:
+        moved_board, reward = board_move_left(board)
+    elif action == 3:
+        moved_board, reward = board_move_right(board)
+    else:
+        print("Invalid action")
+
+    return moved_board, reward
+
+def board_add_random_tile(board):
+    empty_cells = np.argwhere(board == 0)
+    if empty_cells.size > 0:
+        x, y = random.choice(empty_cells)
+        board[x, y] = 2 if random.random() < 0.9 else 4
+    return board
+
+def board_legal_moves(board):
+    # return a list of legal moves
+    moves = []
+    for action in range(4):
+        temp_board = board.copy()
+        new_board, _ = deterministic_step(temp_board, action)
+        if not np.array_equal(temp_board, new_board):
+            moves.append(action)
+    return moves
+
+weights = None
+with open("ntuple_weights29000.pkl", "rb") as f:
+    weights = pickle.load(f)
+
+patterns = [[(0,0), (0, 1), (0, 2), (1, 0), (1, 1)], [(1, 0), (1, 1), (1, 2), (2, 0), (2, 1)], [(0, 0), (0, 1), (0, 2)], [(1, 0), (1, 1), (1, 2)]]
+
+approximator = NTupleApproximator(board_size=4, patterns=patterns, weight=weights)
+
+td_mcts = TD_MCTS(approximator, iterations=50, exploration_constant=0.1, rollout_depth=1, gamma=1)
+
