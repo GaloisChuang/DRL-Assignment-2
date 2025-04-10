@@ -625,5 +625,5 @@ patterns = [[(0,0), (0, 1), (0, 2), (1, 0), (1, 1)], [(1, 0), (1, 1), (1, 2), (2
 
 approximator = NTupleApproximator(board_size=4, patterns=patterns, weight=weights)
 
-td_mcts = TD_MCTS(approximator, iterations=50, exploration_constant=0.1, rollout_depth=1, gamma=1)
+td_mcts = TD_MCTS(approximator, iterations=50, exploration_constant=0.1, rollout_depth=2, gamma=1)
 
