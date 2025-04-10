@@ -236,6 +236,6 @@ def get_action(state, score):
     root = Global.TD_MCTS_Node(state, score)
     for _ in range(Global.td_mcts.iterations):
         Global.td_mcts.run_simulation(root)
-    best_action, _ = Global.td_mcts.best_action(root)
+    best_action, _ = Global.td_mcts.best_action_distribution(root)
     return best_action
     # You can submit this random agent to evaluate the performance of a purely random strategy.
