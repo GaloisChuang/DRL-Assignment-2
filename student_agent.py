@@ -234,7 +234,7 @@ class Game2048Env(gym.Env):
 
 def get_action(state, score):
     root = Global.TD_MCTS_Node(state, score)
-    td_mcts = Global.TD_MCTS(Global.approximator, iterations=50, exploration_constant=0.1, rollout_depth=0, gamma=1)
+    td_mcts = Global.TD_MCTS(Global.approximator, iterations=50, exploration_constant=0.01, rollout_depth=0, gamma=1)
     for _ in range(Global.td_mcts.iterations):
         td_mcts.run_simulation(root)
     best_action, _ = Global.td_mcts.best_action_distribution(root)
