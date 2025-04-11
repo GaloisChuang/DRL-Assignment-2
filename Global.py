@@ -5,6 +5,7 @@ import gym
 from gym import spaces
 import math
 from collections import defaultdict
+import gc
 
 
 class Game2048Env(gym.Env):
@@ -625,5 +626,12 @@ patterns = [[(0,0), (0, 1), (0, 2), (1, 0), (1, 1)], [(1, 0), (1, 1), (1, 2), (2
 
 approximator = NTupleApproximator(board_size=4, patterns=patterns, weight=weights)
 
-td_mcts = TD_MCTS(approximator, iterations=50, exploration_constant=0.1, rollout_depth=2, gamma=1)
+def init_model():
+    global approximator
+    if approximator is None:
+        gc.collect()
+        approximator = NTupleApproximator(board_size=4, patterns=patterns)
+        approximator.load_weights("ntuple_weights29000.pkl")
+
+td_mcts = TD_MCTS(approximator, iterations=50, exploration_constant=0, rollout_depth=0, gamma=1)
 
