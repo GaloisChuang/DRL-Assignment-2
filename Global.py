@@ -425,16 +425,18 @@ class TD_MCTS:
 
     def expand(self, node):
         state = node.state.copy()
-        action = node.untried_actions.pop()
-        after_state, reward = deterministic_step(state, action)
-        after_node = TD_MCTS_After_Node(after_state, ( node.score + reward ) / self.normalization_factor, parent=node, action=action)
-        node.children[action] = after_node
-        for _ in range(4):
-            next_state = board_add_random_tile(after_state.copy())
-            next_node = TD_MCTS_Node(next_state, ( node.score + reward ) / self.normalization_factor, parent=after_node)
-            after_node.children.add(next_node)
-            rollout_reward = self.rollout(next_state, self.rollout_depth)
-            self.backpropagate(next_node, rollout_reward)
+        for action in node.untried_actions:
+            action = node.untried_actions.pop()
+            after_state, reward = deterministic_step(state, action)
+            after_node = TD_MCTS_After_Node(after_state, ( node.score + reward ) / self.normalization_factor, parent=node, action=action)
+            node.children[action] = after_node
+            for _ in range(4):
+                next_state = board_add_random_tile(after_state.copy())
+                next_node = TD_MCTS_Node(next_state, ( node.score + reward ) / self.normalization_factor, parent=after_node)
+                after_node.children.add(next_node)
+                rollout_reward = self.rollout(next_state, self.rollout_depth)
+                self.backpropagate(next_node, rollout_reward)
+        node.untried_actions = []  # Mark the node as fully expanded
 
     def run_simulation(self, root):
         node = root
