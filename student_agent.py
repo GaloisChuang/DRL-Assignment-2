@@ -233,9 +233,7 @@ class Game2048Env(gym.Env):
         return not np.array_equal(self.board, temp_board)
 
 def get_action(state, score):
-    print("Score:", score)
     root = Global.TD_MCTS_Node(state, score)
-    Global.init_model()
     td_mcts = Global.TD_MCTS(Global.approximator, iterations=50, exploration_constant=0.1, rollout_depth=2, gamma=1)
     for _ in range(Global.td_mcts.iterations):
         td_mcts.run_simulation(root)
