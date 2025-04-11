@@ -425,18 +425,16 @@ class TD_MCTS:
 
     def expand(self, node):
         state = node.state.copy()
-        untried_action = node.untried_actions
-        for action in untried_action:
-            after_state, reward = deterministic_step(state, action)
-            after_node = TD_MCTS_After_Node(after_state, ( node.score + reward ) / self.normalization_factor, parent=node, action=action)
-            node.children[action] = after_node
-            for _ in range(4):
-                next_state = board_add_random_tile(after_state.copy())
-                next_node = TD_MCTS_Node(next_state, ( node.score + reward ) / self.normalization_factor, parent=after_node)
-                after_node.children.add(next_node)
-                rollout_reward = self.rollout(next_state, self.rollout_depth)
-                self.backpropagate(next_node, rollout_reward)
-        node.untried_actions = []
+        action = node.untried_actions.pop()
+        after_state, reward = deterministic_step(state, action)
+        after_node = TD_MCTS_After_Node(after_state, ( node.score + reward ) / self.normalization_factor, parent=node, action=action)
+        node.children[action] = after_node
+        for _ in range(4):
+            next_state = board_add_random_tile(after_state.copy())
+            next_node = TD_MCTS_Node(next_state, ( node.score + reward ) / self.normalization_factor, parent=after_node)
+            after_node.children.add(next_node)
+            rollout_reward = self.rollout(next_state, self.rollout_depth)
+            self.backpropagate(next_node, rollout_reward)
 
     def run_simulation(self, root):
         node = root
@@ -449,7 +447,8 @@ class TD_MCTS:
         state = node.state.copy()
 
         # TODO: Expansion: If the node is not terminal, expand an untried action.
-        self.expand(node)
+        if not node.fully_expanded():
+            self.expand(node)
 
     def best_action_distribution(self, root):
         # Compute the normalized visit count distribution for each child of the root.
@@ -625,13 +624,6 @@ with open("ntuple_weights29000.pkl", "rb") as f:
 patterns = [[(0,0), (0, 1), (0, 2), (1, 0), (1, 1)], [(1, 0), (1, 1), (1, 2), (2, 0), (2, 1)], [(0, 0), (0, 1), (0, 2)], [(1, 0), (1, 1), (1, 2)]]
 
 approximator = NTupleApproximator(board_size=4, patterns=patterns, weight=weights)
-
-def init_model():
-    global approximator
-    if approximator is None:
-        gc.collect()
-        approximator = NTupleApproximator(board_size=4, patterns=patterns)
-        approximator.load_weights("ntuple_weights29000.pkl")
 
 td_mcts = TD_MCTS(approximator, iterations=50, exploration_constant=0, rollout_depth=0, gamma=1)
 
