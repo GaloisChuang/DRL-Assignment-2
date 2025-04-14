@@ -613,6 +613,7 @@ def board_legal_moves(board):
             moves.append(action)
     return moves
 
+
 weights = None
 with open("ntuple_weights30000.pkl", "rb") as f:
     weights = pickle.load(f)
@@ -621,5 +622,5 @@ patterns = [[(0,0), (0, 1), (0, 2), (1, 0), (1, 1)], [(1, 0), (1, 1), (1, 2), (2
 
 approximator = NTupleApproximator(board_size=4, patterns=patterns, weight=weights)
 
-td_mcts = TD_MCTS(approximator, iterations=50, exploration_constant=0, rollout_depth=0, gamma=1)
+td_mcts = TD_MCTS(approximator, iterations=50, exploration_constant=0.1, rollout_depth=0, gamma=1)
 
