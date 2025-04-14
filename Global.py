@@ -613,14 +613,8 @@ def board_legal_moves(board):
             moves.append(action)
     return moves
 
-
-
-
-
-
-
 weights = None
-with open("ntuple_weights29000.pkl", "rb") as f:
+with open("ntuple_weights30000.pkl", "rb") as f:
     weights = pickle.load(f)
 
 patterns = [[(0,0), (0, 1), (0, 2), (1, 0), (1, 1)], [(1, 0), (1, 1), (1, 2), (2, 0), (2, 1)], [(0, 0), (0, 1), (0, 2)], [(1, 0), (1, 1), (1, 2)]]
