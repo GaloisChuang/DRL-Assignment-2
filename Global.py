@@ -240,6 +240,7 @@ def rot90(pattern, size):
         new_pattern.append((int(new_x), int(new_y)))
     return new_pattern
 
+
 def rot180(pattern, size):
     M = 0.5 * (size - 1)
     new_pattern = []
@@ -248,6 +249,7 @@ def rot180(pattern, size):
         new_y = M - (y - M)
         new_pattern.append((int(new_x), int(new_y)))
     return new_pattern
+
 
 def rot270(pattern, size):
     M = 0.5 * (size - 1)
@@ -258,11 +260,13 @@ def rot270(pattern, size):
         new_pattern.append((int(new_x), int(new_y)))
     return new_pattern
 
+
 def reflection(pattern, size):
     new_pattern = []
     for (x,y) in pattern:
         new_pattern.append((size - x - 1, y))
     return new_pattern
+
 
 class NTupleApproximator:
     def __init__(self, board_size, patterns, weight=None):
@@ -317,7 +321,6 @@ class NTupleApproximator:
                 weight_table[feature] += alpha * delta
 
 
-
 class TD_MCTS_Node:
     def __init__(self, state, score, parent=None):
         """
@@ -339,6 +342,7 @@ class TD_MCTS_Node:
         # A node is fully expanded if no legal actions remain untried.
         return len(self.untried_actions) == 0    
 
+
 class TD_MCTS_After_Node:
     def __init__(self, state, score, parent=None, action=None):
         """
@@ -354,6 +358,7 @@ class TD_MCTS_After_Node:
         self.children = set()
         self.visits = 0
         self.accumulated_score = score
+
 
 class TD_MCTS:
     def __init__(self, approximator, iterations=500, exploration_constant=1.41, rollout_depth=10, gamma=0.99, normalization_factor=50000):
@@ -424,19 +429,19 @@ class TD_MCTS:
             node = node.parent
 
     def expand(self, node):
-        state = node.state.copy()
-        for action in node.untried_actions:
-            action = node.untried_actions.pop()
-            after_state, reward = deterministic_step(state, action)
-            after_node = TD_MCTS_After_Node(after_state, ( node.score + reward ) / self.normalization_factor, parent=node, action=action)
-            node.children[action] = after_node
-            for _ in range(4):
-                next_state = board_add_random_tile(after_state.copy())
-                next_node = TD_MCTS_Node(next_state, ( node.score + reward ) / self.normalization_factor, parent=after_node)
-                after_node.children.add(next_node)
-                rollout_reward = self.rollout(next_state, self.rollout_depth)
-                self.backpropagate(next_node, rollout_reward)
-        node.untried_actions = []  # Mark the node as fully expanded
+         state = node.state.copy()
+         untried_action = node.untried_actions
+         for action in untried_action:
+             after_state, reward = deterministic_step(state, action)
+             after_node = TD_MCTS_After_Node(after_state, ( node.score + reward ) / self.normalization_factor, parent=node, action=action)
+             node.children[action] = after_node
+             for _ in range(4):
+                 next_state = board_add_random_tile(after_state.copy())
+                 next_node = TD_MCTS_Node(next_state, ( node.score + reward ) / self.normalization_factor, parent=after_node)
+                 after_node.children.add(next_node)
+                 rollout_reward = self.rollout(next_state, self.rollout_depth)
+                 self.backpropagate(next_node, rollout_reward)
+         node.untried_actions = []
 
     def run_simulation(self, root):
         node = root
@@ -464,6 +469,7 @@ class TD_MCTS:
                 best_visits = child.visits
                 best_action = action
         return best_action, distribution
+
 
 def compress_line(line):
     """

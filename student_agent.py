@@ -234,9 +234,9 @@ class Game2048Env(gym.Env):
 
 def get_action(state, score):
     root = Global.TD_MCTS_Node(state, score)
-    td_mcts = Global.TD_MCTS(Global.approximator, iterations=50, exploration_constant=0.05, rollout_depth=0, gamma=1)
+    td_mcts = Global.td_mcts
     for _ in range(Global.td_mcts.iterations):
         td_mcts.run_simulation(root)
-    best_action, _ = Global.td_mcts.best_action_distribution(root)
+    best_action, _ = td_mcts.best_action_distribution(root)
     return best_action
     # You can submit this random agent to evaluate the performance of a purely random strategy.
